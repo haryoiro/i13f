@@ -7,3 +7,6 @@ webapp/perl
 webapp/python
 !/.github
 !/.gitignore
+!/logs
+!/nginx
+!/mysql
