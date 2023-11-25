@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os/exec"
 	"time"
@@ -426,43 +428,13 @@ func verifyUserSession(c echo.Context) error {
 }
 
 func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (User, error) {
-	//themeModel := ThemeModel{}
-	//if err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", userModel.ID); err != nil {
-	//	return User{}, err
-	//}
-	//
-	//var image []byte
-	//if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", userModel.ID); err != nil {
-	//	if !errors.Is(err, sql.ErrNoRows) {
-	//		return User{}, err
-	//	}
-	//	//image, err = os.ReadFile(fallbackImage)
-	//	if err != nil {
-	//		return User{}, err
-	//	}
-	//}
+	themeModel := ThemeModel{}
+	if err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", userModel.ID); err != nil {
+		return User{}, err
+	}
 
-	//ID       int64 `db:"id"`
-	//UserID   int64 `db:"user_id"`
-	//DarkMode bool  `db:"dark_mode"`
-	//
-	query := `
-SELECT 
-    th.id AS id, 
-    th.user_id as user_id, 
-    th.dark_mode as dark_mode, 
-    IFNULL(SHA2(ic.image, 256), 'd9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0') as image
-FROM 
-    users u
-LEFT JOIN 
-    themes th ON u.id = th.user_id
-LEFT JOIN 
-    icons ic ON u.id = ic.user_id
-WHERE 
-    u.id = ?`
-
-	themeImageModel := ThemeImageModel{}
-	if err := tx.GetContext(ctx, &themeImageModel, query, userModel.ID); err != nil {
+	var image []byte
+	if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", userModel.ID); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return User{}, err
 		}
@@ -471,14 +443,44 @@ WHERE
 			return User{}, err
 		}
 	}
-	println("image {}, user_id {}, ", themeImageModel.Image, themeImageModel.UserID)
 
-	//var iconHash string
-	//if len(image) == 0 {
-	//iconHash = "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0"
-	//} else {
-	//	iconHash = fmt.Sprintf("%x", sha256.Sum256(image))
+	//ID       int64 `db:"id"`
+	//UserID   int64 `db:"user_id"`
+	//DarkMode bool  `db:"dark_mode"`
+	//
+	//	query := `
+	//SELECT
+	//    th.id AS id,
+	//    th.user_id as user_id,
+	//    th.dark_mode as dark_mode,
+	//    IFNULL(SHA2(ic.image, 256), 'd9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0') as image
+	//FROM
+	//    users u
+	//LEFT JOIN
+	//    themes th ON u.id = th.user_id
+	//LEFT JOIN
+	//    icons ic ON u.id = ic.user_id
+	//WHERE
+	//    u.id = ?`
+
+	//themeImageModel := ThemeImageModel{}
+	//if err := tx.GetContext(ctx, &themeImageModel, query, userModel.ID); err != nil {
+	//	if !errors.Is(err, sql.ErrNoRows) {
+	//		return User{}, err
+	//	}
+	//	//image, err = os.ReadFile(fallbackImage)
+	//	if err != nil {
+	//		return User{}, err
+	//	}
 	//}
+	//println("image {}, user_id {}, ", themeImageModel.Image, themeImageModel.UserID)
+	//
+	var iconHash string
+	if len(image) == 0 {
+		iconHash = "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0"
+	} else {
+		iconHash = fmt.Sprintf("%x", sha256.Sum256(image))
+	}
 
 	user := User{
 		ID:          userModel.ID,
@@ -486,10 +488,10 @@ WHERE
 		DisplayName: userModel.DisplayName,
 		Description: userModel.Description,
 		Theme: Theme{
-			ID:       themeImageModel.ID,
-			DarkMode: themeImageModel.DarkMode,
+			ID:       themeModel.ID,
+			DarkMode: themeModel.DarkMode,
 		},
-		IconHash: themeImageModel.Image,
+		IconHash: iconHash,
 	}
 
 	return user, nil
