@@ -144,8 +144,8 @@ func getUserStatisticsHandler(c echo.Context) error {
 
 	//// ライブコメント数、チップ合計
 	var result struct {
-		TotalLivecomments int64
-		TotalTip          int64
+		TotalLivecomments int64 `db:"total_livecomments"`
+		TotalTip          int64 `db:"total_tip"`
 	}
 
 	query = `
