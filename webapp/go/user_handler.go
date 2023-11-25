@@ -2,11 +2,10 @@ package main
 
 import (
 	"context"
-	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
+	"log"
 	"net/http"
 	"os/exec"
 	"time"
@@ -79,6 +78,12 @@ type ThemeModel struct {
 	ID       int64 `db:"id"`
 	UserID   int64 `db:"user_id"`
 	DarkMode bool  `db:"dark_mode"`
+}
+type ThemeImageModel struct {
+	ID       int64  `db:"id"`
+	UserID   int64  `db:"user_id"`
+	DarkMode bool   `db:"dark_mode"`
+	image    string `db:"image"`
 }
 
 type PostUserRequest struct {
@@ -422,13 +427,28 @@ func verifyUserSession(c echo.Context) error {
 }
 
 func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (User, error) {
-	themeModel := ThemeModel{}
-	if err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", userModel.ID); err != nil {
-		return User{}, err
-	}
+	//themeModel := ThemeModel{}
+	//if err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", userModel.ID); err != nil {
+	//	return User{}, err
+	//}
+	//
+	//var image []byte
+	//if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", userModel.ID); err != nil {
+	//	if !errors.Is(err, sql.ErrNoRows) {
+	//		return User{}, err
+	//	}
+	//	//image, err = os.ReadFile(fallbackImage)
+	//	if err != nil {
+	//		return User{}, err
+	//	}
+	//}
 
-	var image []byte
-	if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", userModel.ID); err != nil {
+	//ID       int64 `db:"id"`
+	//UserID   int64 `db:"user_id"`
+	//DarkMode bool  `db:"dark_mode"`
+	//
+	themeImageModel := ThemeImageModel{}
+	if err := tx.GetContext(ctx, &themeImageModel, "SELECT th.id as id, th.user_id as user_id, th.dark_mode as dark_mode, IFNULL(SHA2(ic.image, 256), 'd9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0') as image FROM themes th, icons ic WHERE th.user_id = ?", userModel.ID); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return User{}, err
 		}
@@ -437,13 +457,14 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 			return User{}, err
 		}
 	}
+	log.Fatal("image {}, user_id {}, ", themeImageModel.image, themeImageModel.UserID)
 
-	var iconHash string
-	if len(image) == 0 {
-		iconHash = "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0"
-	} else {
-		iconHash = fmt.Sprintf("%x", sha256.Sum256(image))
-	}
+	//var iconHash string
+	//if len(image) == 0 {
+	//iconHash = "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0"
+	//} else {
+	//	iconHash = fmt.Sprintf("%x", sha256.Sum256(image))
+	//}
 
 	user := User{
 		ID:          userModel.ID,
@@ -451,10 +472,10 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 		DisplayName: userModel.DisplayName,
 		Description: userModel.Description,
 		Theme: Theme{
-			ID:       themeModel.ID,
-			DarkMode: themeModel.DarkMode,
+			ID:       themeImageModel.ID,
+			DarkMode: themeImageModel.DarkMode,
 		},
-		IconHash: iconHash,
+		IconHash: themeImageModel.image,
 	}
 
 	return user, nil
