@@ -55,15 +55,15 @@ type Livestream struct {
 }
 
 type JoinedLivestream struct {
-	ID           int64         `db:"livestream_id" json:"id"`
+	ID           int64         `db:"id" json:"id"`
 	Owner        PrefixedUser  `db:"users" json:"owner"`
-	Title        string        `db:"livestream_title" json:"title"`
-	Description  string        `db:"livestream_description" json:"description"`
-	PlaylistUrl  string        `db:"livestream_playlist_url" json:"playlist_url"`
-	ThumbnailUrl string        `db:"livestream_thumbnail_url" json:"thumbnail_url"`
+	Title        string        `db:"title" json:"title"`
+	Description  string        `db:"description" json:"description"`
+	PlaylistUrl  string        `db:"playlist_url" json:"playlist_url"`
+	ThumbnailUrl string        `db:"thumbnail" json:"thumbnail_url"`
 	Tags         []PrefixedTag `db:"tags" json:"tags"`
-	StartAt      int64         `db:"livestream_start_at" json:"start_at"`
-	EndAt        int64         `db:"livestream_end_at" json:"end_at"`
+	StartAt      int64         `db:"start_at" json:"start_at"`
+	EndAt        int64         `db:"end_at" json:"end_at"`
 }
 
 type LivestreamTagModel struct {
@@ -219,22 +219,22 @@ func searchLivestreamsHandler(c echo.Context) error {
 		}
 	} else {
 		// 検索条件なし
-		query := `SELECT livestreams.id AS livestream_id,
-				livestreams.title AS livestream_title,
-				livestreams.description AS livestream_description,
-				livestreams.playlist_url AS livestream_playlist_url,
-				livestreams.thumbnail_url AS livestream_thumbnail_url,
-				livestreams.start_at AS livestream_start_at,
-				livestreams.end_at AS livestream_end_at,
-				users.id AS user_id,
-				users.name AS user_name,
-				users.display_name AS user_display_name,
-				users.description AS user_description,
-				themes.id AS theme_id,
-				themes.dark_mode AS theme_dark_mode,
-				IFNULL(SHA2(icons.image, 256), "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0") AS user_icon_hash,
-				tags.id AS tag_id,
-				tags.name AS tag_name
+		query := `SELECT livestreams.id AS id,
+				livestreams.title AS title,
+				livestreams.description AS description,
+				livestreams.playlist_url AS playlist_url,
+				livestreams.thumbnail_url AS thumbnail_url,
+				livestreams.start_at AS start_at,
+				livestreams.end_at AS end_at,
+				users.id AS "users.id",
+				users.name AS "users.name",
+				users.display_name AS "users.display_name",
+				users.description AS "users.description",
+				themes.id AS "users.themes.id",
+				themes.dark_mode AS "users.themes.dark_mode",
+				IFNULL(SHA2(icons.image, 256), "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0") AS "users.icon_hash",
+				tags.id AS "tags.id",
+				tags.name AS "tags.name"
 			FROM livestreams
 			LEFT JOIN users ON users.id = livestreams.user_id
 			LEFT JOIN themes ON themes.user_id = users.id

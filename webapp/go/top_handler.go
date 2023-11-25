@@ -14,8 +14,8 @@ type Tag struct {
 }
 
 type PrefixedTag struct {
-	ID   int64  `db:"tag_id" json:"id"`
-	Name string `db:"tag_name" json:"name"`
+	ID   int64  `db:"id" json:"id"`
+	Name string `db:"name" json:"name"`
 }
 
 type TagModel struct {

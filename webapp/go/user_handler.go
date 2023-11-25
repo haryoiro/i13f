@@ -48,12 +48,12 @@ type User struct {
 }
 
 type PrefixedUser struct {
-	ID          int64         `db:"user_id" json:"id"`
-	Name        string        `db:"user_name" json:"name"`
-	DisplayName string        `db:"user_display_name" json:"display_name,omitempty"`
-	Description string        `db:"user_description" json:"description,omitempty"`
+	ID          int64         `db:"id" json:"id"`
+	Name        string        `db:"name" json:"name"`
+	DisplayName string        `db:"display_name" json:"display_name,omitempty"`
+	Description string        `db:"description" json:"description,omitempty"`
 	Theme       PrefixedTheme `db:"themes" json:"theme,omitempty"`
-	IconHash    string        `db:"user_icon_hash" json:"icon_hash,omitempty"`
+	IconHash    string        `db:"icon_hash" json:"icon_hash,omitempty"`
 }
 
 type Theme struct {
@@ -62,8 +62,8 @@ type Theme struct {
 }
 
 type PrefixedTheme struct {
-	ID       int64 `db:"theme_id" json:"id"`
-	DarkMode bool  `db:"theme_dark_mode" json:"dark_mode"`
+	ID       int64 `db:"id" json:"id"`
+	DarkMode bool  `db:"dark_mode" json:"dark_mode"`
 }
 
 type ThemeModel struct {
