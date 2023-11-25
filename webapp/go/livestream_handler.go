@@ -73,7 +73,7 @@ type JoinedLivestream struct {
 	Description  string       `db:"description" json:"description"`
 	PlaylistUrl  string       `db:"playlist_url" json:"playlist_url"`
 	ThumbnailUrl string       `db:"thumbnail_url" json:"thumbnail_url"`
-	Tags         PrefixedTag  `db:"tags" json:"tags"`
+	Tags         []Tag        `db:"tags" json:"tags"`
 	StartAt      int64        `db:"start_at" json:"start_at"`
 	EndAt        int64        `db:"end_at" json:"end_at"`
 }
@@ -244,15 +244,12 @@ func searchLivestreamsHandler(c echo.Context) error {
 				users.description AS "users.description",
 				themes.id AS "users.themes.id",
 				themes.dark_mode AS "users.themes.dark_mode",
-				IFNULL(SHA2(icons.image, 256), "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0") AS "users.icon_hash",
-				tags.id AS "tags.id",
-				tags.name AS "tags.name"
+				IFNULL(SHA2(icons.image, 256), "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0") AS "users.icon_hash"
 			FROM livestreams
 			LEFT JOIN users ON users.id = livestreams.user_id
 			LEFT JOIN themes ON themes.user_id = users.id
 			LEFT JOIN icons ON icons.user_id = users.id
 			LEFT JOIN livestream_tags ON livestream_tags.livestream_id = livestreams.id
-			LEFT JOIN tags ON tags.id = livestream_tags.tag_id
 		ORDER BY id DESC`
 		if c.QueryParam("limit") != "" {
 			limit, err := strconv.Atoi(c.QueryParam("limit"))
@@ -267,32 +264,48 @@ func searchLivestreamsHandler(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestreams: "+err.Error())
 		}
 
+		liveIdList := []int64{}
+		lastLiveId := int64(-1)
+		for _, ls := range livestreams {
+			if ls.ID != lastLiveId {
+				liveIdList = append(liveIdList, ls.ID)
+				lastLiveId = ls.ID
+			}
+		}
+
+		type LiveTag struct {
+			LivestreamID int64  `db:"livestream_id"`
+			TagID        int64  `db:"tag_id"`
+			TagName      string `db:"tag_name"`
+		}
+		query2 := `SELECT livestream_tags.livestream_id,
+				tag.id AS tag_id,
+				tag.name AS tag_name
+			FROM livestream_tags
+			LEFT JOIN tags ON tags.id = livestream_tags.tag_id
+			WHERE livestream_tags.livestream_id IN (?)`
+		var livetags []*LiveTag
+		if err := tx.SelectContext(ctx, &livetags, query2, liveIdList); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestream tags: "+err.Error())
+		}
+
 		if err := tx.Commit(); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 		}
 
-		var resp []JoinedLivestreamResp
-		finalId := int64(-1)
-		for _, ls := range livestreams {
-			if finalId != ls.ID {
-				resp = append(resp, JoinedLivestreamResp{
-					ID:           ls.ID,
-					Owner:        ls.Owner,
-					Title:        ls.Title,
-					Description:  ls.Description,
-					PlaylistUrl:  ls.PlaylistUrl,
-					ThumbnailUrl: ls.ThumbnailUrl,
-					Tags:         []PrefixedTag{ls.Tags},
-					StartAt:      ls.StartAt,
-					EndAt:        ls.EndAt,
-				})
-				finalId = ls.ID
-			} else {
-				resp[len(resp)-1].Tags = append(resp[len(resp)-1].Tags, ls.Tags)
+		for _, tag := range livetags {
+			for _, ls := range livestreams {
+				if ls.ID == tag.LivestreamID {
+					ls.Tags = append(ls.Tags, Tag{
+						ID:   tag.TagID,
+						Name: tag.TagName,
+					})
+					break
+				}
 			}
 		}
 
-		return c.JSON(http.StatusOK, resp)
+		return c.JSON(http.StatusOK, livestreams)
 	}
 
 	livestreams := make([]Livestream, len(livestreamModels))
