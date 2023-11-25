@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"os/exec"
 	"time"
@@ -457,7 +456,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 			return User{}, err
 		}
 	}
-	log.Fatal("image {}, user_id {}, ", themeImageModel.image, themeImageModel.UserID)
+	println("image {}, user_id {}, ", themeImageModel.image, themeImageModel.UserID)
 
 	//var iconHash string
 	//if len(image) == 0 {
