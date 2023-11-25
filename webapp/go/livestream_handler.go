@@ -224,12 +224,15 @@ func searchLivestreamsHandler(c echo.Context) error {
 				users.name AS user_name,
 				users.display_name AS user_display_name,
 				users.description AS user_description,
-				users.theme AS user_theme,
-				users.icon_hash AS user_icon_hash,
+				themes.id AS theme_id,
+				themes.dark_mode AS theme_dark_mode,
+				IFNULL(SHA2(icons.image, 256), "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0") AS user_icon_hash,
 				tags.id AS tag_id,
 				tags.name AS tag_name
 			FROM livestreams
 			LEFT JOIN users ON users.id = livestreams.user_id
+			LEFT JOIN themes ON themes.user_id = users.id
+			LEFT JOIN icons ON icons.user_id users.id
 			LEFT JOIN livestream_tags ON livestream_tags.livestream_id = livestreams.id
 			LEFT JOIN tags ON tags.id = livestream_tags.tag_id
 		ORDER BY id DESC`
