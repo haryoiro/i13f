@@ -46,12 +46,6 @@ func getReactionsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "livestream_id in path must be integer")
 	}
 
-	tx, err := dbConn.BeginTxx(ctx, nil)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to begin transaction: "+err.Error())
-	}
-	defer tx.Rollback()
-
 	query := "SELECT * FROM reactions WHERE livestream_id = ? ORDER BY created_at DESC"
 	if c.QueryParam("limit") != "" {
 		limit, err := strconv.Atoi(c.QueryParam("limit"))
@@ -62,22 +56,18 @@ func getReactionsHandler(c echo.Context) error {
 	}
 
 	reactionModels := []ReactionModel{}
-	if err := tx.SelectContext(ctx, &reactionModels, query, livestreamID); err != nil {
+	if err := dbConn.SelectContext(ctx, &reactionModels, query, livestreamID); err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "failed to get reactions")
 	}
 
 	reactions := make([]Reaction, len(reactionModels))
 	for i := range reactionModels {
-		reaction, err := fillReactionResponse(ctx, tx, reactionModels[i])
+		reaction, err := fillReactionResponseGet(ctx, dbConn, reactionModels[i])
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to fill reaction: "+err.Error())
 		}
 
 		reactions[i] = reaction
-	}
-
-	if err := tx.Commit(); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 	}
 
 	return c.JSON(http.StatusOK, reactions)
@@ -156,6 +146,35 @@ func fillReactionResponse(ctx context.Context, tx *sqlx.Tx, reactionModel Reacti
 		return Reaction{}, err
 	}
 	livestream, err := fillLivestreamResponse(ctx, tx, livestreamModel)
+	if err != nil {
+		return Reaction{}, err
+	}
+
+	reaction := Reaction{
+		ID:         reactionModel.ID,
+		EmojiName:  reactionModel.EmojiName,
+		User:       user,
+		Livestream: livestream,
+		CreatedAt:  reactionModel.CreatedAt,
+	}
+
+	return reaction, nil
+}
+func fillReactionResponseGet(ctx context.Context, tx *sqlx.DB, reactionModel ReactionModel) (Reaction, error) {
+	userModel := UserModel{}
+	if err := tx.GetContext(ctx, &userModel, "SELECT * FROM users WHERE id = ?", reactionModel.UserID); err != nil {
+		return Reaction{}, err
+	}
+	user, err := fillUserResponseGet(ctx, tx, userModel)
+	if err != nil {
+		return Reaction{}, err
+	}
+
+	livestreamModel := LivestreamModel{}
+	if err := tx.GetContext(ctx, &livestreamModel, "SELECT * FROM livestreams WHERE id = ?", reactionModel.LivestreamID); err != nil {
+		return Reaction{}, err
+	}
+	livestream, err := fillLivestreamResponseGet(ctx, tx, livestreamModel)
 	if err != nil {
 		return Reaction{}, err
 	}
