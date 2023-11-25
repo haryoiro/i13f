@@ -152,7 +152,7 @@ LEFT JOIN
 GROUP BY 
     u.id
 ORDER BY 
-    (reactions + tips) DESC, u.name
+    (reactions + tips) DESC, u.id
 `
 	if err := tx.SelectContext(ctx, &rankingEntries, rankingQuery); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to generate ranking: "+err.Error())
