@@ -87,13 +87,14 @@ func getUserStatisticsHandler(c echo.Context) error {
 	}
 
 	// ランク算出
-	var users []*UserModel
-	if err := tx.SelectContext(ctx, &users, "SELECT * FROM users"); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get users: "+err.Error())
-	}
+	//var users []*UserModel
+	//if err := tx.SelectContext(ctx, &users, "SELECT * FROM users"); err != nil {
+	//	return echo.NewHTTPError(http.StatusInternalServerError, "failed to get users: "+err.Error())
+	//}
 
 	var ranking UserRanking
 
+	var rankings []UserRankingEntry
 	query := `
 SELECT
     u.name as username,
@@ -107,7 +108,7 @@ LEFT JOIN
 GROUP BY 
     u.id, u.name
 `
-	if err := tx.GetContext(ctx, &ranking, query); err != nil {
+	if err := tx.GetContext(ctx, &rankings, query); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to count reactions and tips: "+err.Error())
 	}
 
@@ -159,6 +160,7 @@ GROUP BY
 	//			Score:    score,
 	//		})
 	//	}
+	ranking = rankings
 	sort.Sort(ranking)
 
 	var rank int64 = 1
