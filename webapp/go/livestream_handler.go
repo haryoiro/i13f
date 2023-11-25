@@ -219,7 +219,13 @@ func searchLivestreamsHandler(c echo.Context) error {
 		}
 	} else {
 		// 検索条件なし
-		query := `SELECT livestreams.*,
+		query := `SELECT livestreams.id,
+				livestreams.title,
+				livestreams.description,
+				livestreams.playlist_url,
+				livestreams.thumbnail_url,
+				livestreams.start_at,
+				livestreams.end_at,
 				users.id AS user_id,
 				users.name AS user_name,
 				users.display_name AS user_display_name,
