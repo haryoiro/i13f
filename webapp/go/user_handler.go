@@ -448,10 +448,10 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 	//
 	query := `
 SELECT 
-    th.id AS theme_id, 
-    th.user_id, 
-    th.dark_mode, 
-    IFNULL(SHA2(ic.image, 256), 'd9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0') AS image_hash
+    th.id AS id, 
+    th.user_id as user_id, 
+    th.dark_mode as dark_mode, 
+    IFNULL(SHA2(ic.image, 256), 'd9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0') as image
 FROM 
     users u
 LEFT JOIN 
