@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/labstack/gommon/log"
 	"net/http"
 	"strconv"
 	"time"
@@ -150,6 +151,7 @@ func getLivecommentsHandler(c echo.Context) error {
 		if commentOwnerModel.image == "" {
 			commentOwner.IconHash = "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0"
 		}
+		log.Debug(commentOwnerModel.image, commentOwner.IconHash, commentOwnerModel.UserID, commentOwnerModel.Name, commentOwnerModel.DisplayName, commentOwnerModel.Description, commentOwnerModel.ThemeID, commentOwnerModel.DarkMode)
 
 		livestreamModel := LivestreamModel{}
 		if err := tx.GetContext(ctx, &livestreamModel, "SELECT * FROM livestreams WHERE id = ?", livecommentModels[i].LivestreamID); err != nil {
