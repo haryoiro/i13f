@@ -474,7 +474,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 			ID:       themeImageModel.ID,
 			DarkMode: themeImageModel.DarkMode,
 		},
-		IconHash: themeImageModel.image,
+		IconHash: themeImageModel.Image,
 	}
 
 	return user, nil
