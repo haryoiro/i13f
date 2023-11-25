@@ -37,6 +37,14 @@ type UserModel struct {
 	Description    string `db:"description"`
 	HashedPassword string `db:"password"`
 }
+type UserImageModel struct {
+	ID             int64  `db:"id"`
+	Name           string `db:"name"`
+	DisplayName    string `db:"display_name"`
+	Description    string `db:"description"`
+	HashedPassword string `db:"password"`
+	image          string `db:"image"`
+}
 
 type User struct {
 	ID          int64  `json:"id"`

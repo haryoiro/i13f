@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -104,7 +105,65 @@ func getLivecommentsHandler(c echo.Context) error {
 
 	livecomments := make([]Livecomment, len(livecommentModels))
 	for i := range livecommentModels {
-		livecomment, err := fillLivecommentResponse(ctx, tx, livecommentModels[i])
+
+		//ID             int64  `db:"id"`
+		//Name           string `db:"name"`
+		//DisplayName    string `db:"display_name"`
+		//Description    string `db:"description"`
+		//HashedPassword string `db:"password"`
+		//image          []byte `db:"image"`
+		//}
+		commentOwnerModel := UserImageModel{}
+		if err := tx.GetContext(ctx, &commentOwnerModel, "SELECT u.id as id, u.name as name, u.display_name as display_name, u.description as description, u.password as password, SHA2(ic.image, 256) AS image"+
+			"FROM users as u"+
+			"INNER JOIN icons as ic"+
+			"ON u.id = ic.user_id"+
+			"WHERE id = ?", livecommentModels[i].UserID); err != nil {
+		}
+
+		themeModel := ThemeModel{}
+		if err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", commentOwnerModel.ID); err != nil {
+			log.Fatal(err)
+		}
+
+		//var image []byte
+		//if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", commentOwnerModel.ID); err != nil {
+		//	if !errors.Is(err, sql.ErrNoRows) {
+		//	}
+		//	image, err = os.ReadFile(fallbackImage)
+		//	if err != nil {
+		//	}
+		//}
+		//iconHash := sha256.Sum256(image)
+
+		commentOwner := User{
+			ID:          commentOwnerModel.ID,
+			Name:        commentOwnerModel.Name,
+			DisplayName: commentOwnerModel.DisplayName,
+			Description: commentOwnerModel.Description,
+			Theme: Theme{
+				ID:       themeModel.ID,
+				DarkMode: themeModel.DarkMode,
+			},
+			IconHash: commentOwnerModel.image,
+		}
+
+		livestreamModel := LivestreamModel{}
+		if err := tx.GetContext(ctx, &livestreamModel, "SELECT * FROM livestreams WHERE id = ?", livecommentModels[i].LivestreamID); err != nil {
+		}
+		livestream, err := fillLivestreamResponse(ctx, tx, livestreamModel)
+		if err != nil {
+		}
+
+		livecomment := Livecomment{
+			ID:         livecommentModels[i].ID,
+			User:       commentOwner,
+			Livestream: livestream,
+			Comment:    livecommentModels[i].Comment,
+			Tip:        livecommentModels[i].Tip,
+			CreatedAt:  livecommentModels[i].CreatedAt,
+		}
+
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to fil livecomments: "+err.Error())
 		}
