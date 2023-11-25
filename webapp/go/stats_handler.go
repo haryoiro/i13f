@@ -157,14 +157,35 @@ func getUserStatisticsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestreams and livecomments data: "+err.Error())
 	}
 
+	viewersQuery := `
+SELECT 
+    IFNULL(SUM(viewer_count), 0) AS total_viewers
+FROM 
+    (SELECT 
+        ls.id, 
+        COUNT(v.id) AS viewer_count
+     FROM 
+        livestreams ls
+     LEFT JOIN 
+        livestream_viewers_history v ON v.livestream_id = ls.id
+     WHERE 
+        ls.user_id = 10
+     GROUP BY 
+        ls.id) AS subquery
+	`
+
 	// 合計視聴者数
-	var viewersCount int64
-	for _, livestream := range livestreams {
-		var cnt int64
-		if err := tx.GetContext(ctx, &cnt, "SELECT COUNT(*) FROM livestream_viewers_history WHERE livestream_id = ?", livestream.ID); err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestream_view_history: "+err.Error())
-		}
-		viewersCount += cnt
+	//var viewersCount int64
+	//for _, livestream := range livestreams {
+	//	var cnt int64
+	//	if err := tx.GetContext(ctx, &cnt, "SELECT COUNT(*) FROM livestream_viewers_history WHERE livestream_id = ?", livestream.ID); err != nil && !errors.Is(err, sql.ErrNoRows) {
+	//		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestream_view_history: "+err.Error())
+	//	}
+	//	viewersCount += cnt
+	//}
+	var totalViewersCount int64
+	if err := tx.GetContext(ctx, &totalViewersCount, viewersQuery, user.ID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get total viewers count: "+err.Error())
 	}
 
 	// お気に入り絵文字
@@ -185,10 +206,10 @@ func getUserStatisticsHandler(c echo.Context) error {
 
 	stats := UserStatistics{
 		Rank:              rank,
-		ViewersCount:      viewersCount,
+		ViewersCount:      totalViewersCount,
 		TotalReactions:    totalReactions,
-		TotalLivecomments: totalLivecomments,
-		TotalTip:          totalTip,
+		TotalLivecomments: result.TotalLivecomments,
+		TotalTip:          result.TotalTip,
 		FavoriteEmoji:     favoriteEmoji,
 	}
 	return c.JSON(http.StatusOK, stats)
