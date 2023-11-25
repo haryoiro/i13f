@@ -267,6 +267,7 @@ func searchLivestreamsHandler(c echo.Context) error {
 		liveIdList := []int{}
 		lastLiveId := int64(-1)
 		for _, ls := range livestreams {
+			ls.Tags = make([]Tag, 0)
 			if ls.ID != lastLiveId {
 				liveIdList = append(liveIdList, int(ls.ID))
 				lastLiveId = ls.ID
