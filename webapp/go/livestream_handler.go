@@ -241,7 +241,7 @@ func searchLivestreamsHandler(c echo.Context) error {
 			LEFT JOIN icons ON icons.user_id = users.id
 			LEFT JOIN livestream_tags ON livestream_tags.livestream_id = livestreams.id
 			LEFT JOIN tags ON tags.id = livestream_tags.tag_id
-		ORDER BY id DESC`
+		ORDER BY livestream_id DESC`
 		if c.QueryParam("limit") != "" {
 			limit, err := strconv.Atoi(c.QueryParam("limit"))
 			if err != nil {
