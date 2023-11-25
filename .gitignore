@@ -8,3 +8,5 @@ webapp/python
 !/.github
 !/.gitignore
 !/logs
+!/nginx
+!/mysql
