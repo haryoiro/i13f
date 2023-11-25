@@ -279,8 +279,8 @@ func searchLivestreamsHandler(c echo.Context) error {
 			TagName      string `db:"tag_name"`
 		}
 		query2Base := `SELECT livestream_tags.livestream_id,
-				tag.id AS tag_id,
-				tag.name AS tag_name
+				tags.id AS tag_id,
+				tags.name AS tag_name
 			FROM livestream_tags
 			LEFT JOIN tags ON tags.id = livestream_tags.tag_id
 			WHERE livestream_tags.livestream_id IN (?)`
