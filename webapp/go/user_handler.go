@@ -446,8 +446,23 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 	//UserID   int64 `db:"user_id"`
 	//DarkMode bool  `db:"dark_mode"`
 	//
+	query := `
+SELECT 
+    th.id AS theme_id, 
+    th.user_id, 
+    th.dark_mode, 
+    IFNULL(SHA2(ic.image, 256), 'd9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0') AS image_hash
+FROM 
+    users u
+LEFT JOIN 
+    themes th ON u.id = th.user_id
+LEFT JOIN 
+    icons ic ON u.id = ic.user_id
+WHERE 
+    u.id = ?`
+
 	themeImageModel := ThemeImageModel{}
-	if err := tx.GetContext(ctx, &themeImageModel, "SELECT th.id as id, th.user_id as user_id, th.dark_mode as dark_mode, IFNULL(SHA2(ic.image, 256), 'd9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0') as image FROM themes as th, icons as ic WHERE th.user_id = ?", userModel.ID); err != nil {
+	if err := tx.GetContext(ctx, &themeImageModel, query, userModel.ID); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return User{}, err
 		}
