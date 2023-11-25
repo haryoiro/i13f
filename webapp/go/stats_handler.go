@@ -108,7 +108,7 @@ LEFT JOIN
 GROUP BY 
     u.id, u.name
 `
-	if err := tx.GetContext(ctx, &rankings, query); err != nil {
+	if err := tx.SelectContext(ctx, &rankings, query); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to count reactions and tips: "+err.Error())
 	}
 
