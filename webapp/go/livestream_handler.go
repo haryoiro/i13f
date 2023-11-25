@@ -278,14 +278,18 @@ func searchLivestreamsHandler(c echo.Context) error {
 			TagID        int64  `db:"tag_id"`
 			TagName      string `db:"tag_name"`
 		}
-		query2 := `SELECT livestream_tags.livestream_id,
+		query2Base := `SELECT livestream_tags.livestream_id,
 				tag.id AS tag_id,
 				tag.name AS tag_name
 			FROM livestream_tags
 			LEFT JOIN tags ON tags.id = livestream_tags.tag_id
 			WHERE livestream_tags.livestream_id IN (?)`
 		var livetags []*LiveTag
-		if err := tx.SelectContext(ctx, &livetags, query2, liveIdList); err != nil {
+		query2, params, err := sqlx.In(query2Base, liveIdList)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to construct IN query: "+err.Error())
+		}
+		if err := tx.SelectContext(ctx, &livetags, query2, params...); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestream tags: "+err.Error())
 		}
 
