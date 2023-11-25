@@ -1,8 +1,6 @@
 package main
 
 import (
-	"database/sql"
-	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -75,18 +73,18 @@ func getStreamerThemeHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to begin transaction: "+err.Error())
 	}
 	defer tx.Rollback()
-
-	userModel := UserModel{}
-	err = tx.GetContext(ctx, &userModel, "SELECT id FROM users WHERE name = ?", username)
-	if errors.Is(err, sql.ErrNoRows) {
-		return echo.NewHTTPError(http.StatusNotFound, "not found user that has the given username")
-	}
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
-	}
+	//
+	//userModel := UserModel{}
+	//err = tx.GetContext(ctx, &userModel, "SELECT id FROM users WHERE name = ?", username)
+	//if errors.Is(err, sql.ErrNoRows) {
+	//	return echo.NewHTTPError(http.StatusNotFound, "not found user that has the given username")
+	//}
+	//if err != nil {
+	//	return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user: "+err.Error())
+	//}
 
 	themeModel := ThemeModel{}
-	if err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", userModel.ID); err != nil {
+	if err := tx.GetContext(ctx, &themeModel, "SELECT th.id as id, th.user_id as user_id, th.dark_mode as dark_mode FROM themes as th, users as u WHERE u.name = ?", username); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user theme: "+err.Error())
 	}
 
