@@ -264,11 +264,11 @@ func searchLivestreamsHandler(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestreams: "+err.Error())
 		}
 
-		liveIdList := []int64{}
+		liveIdList := []int{}
 		lastLiveId := int64(-1)
 		for _, ls := range livestreams {
 			if ls.ID != lastLiveId {
-				liveIdList = append(liveIdList, ls.ID)
+				liveIdList = append(liveIdList, int(ls.ID))
 				lastLiveId = ls.ID
 			}
 		}
