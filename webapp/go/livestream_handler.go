@@ -54,6 +54,18 @@ type Livestream struct {
 	EndAt        int64  `json:"end_at"`
 }
 
+type JoinedLivestream struct {
+	ID           int64         `json:"id"`
+	Owner        PrefixedUser  `json:"owner"`
+	Title        string        `json:"title"`
+	Description  string        `json:"description"`
+	PlaylistUrl  string        `json:"playlist_url"`
+	ThumbnailUrl string        `json:"thumbnail_url"`
+	Tags         []PrefixedTag `json:"tags"`
+	StartAt      int64         `json:"start_at"`
+	EndAt        int64         `json:"end_at"`
+}
+
 type LivestreamTagModel struct {
 	ID           int64 `db:"id" json:"id"`
 	LivestreamID int64 `db:"livestream_id" json:"livestream_id"`
@@ -207,7 +219,16 @@ func searchLivestreamsHandler(c echo.Context) error {
 		}
 	} else {
 		// 検索条件なし
-		query := `SELECT * FROM livestreams
+		query := `SELECT livestream.*,
+				users.id AS user_id,
+				users.name AS user_name,
+				users.display_name AS user_display_name,
+				users.description AS user_description,
+				users.theme AS user_theme,
+				users.icon_hash AS user_icon_hash,
+				tags.id AS tag_id,
+				tags.name AS tag_name
+			FROM livestreams
 			LEFT JOIN users ON users.id = livestreams.user_id
 			LEFT JOIN livestream_tags ON livestream_tags.livestream_id = livestreams.id
 			LEFT JOIN tags ON tags.id = livestream_tags.tag_id
@@ -220,7 +241,7 @@ func searchLivestreamsHandler(c echo.Context) error {
 			query += fmt.Sprintf(" LIMIT %d", limit)
 		}
 
-		var livestreams []*Livestream
+		var livestreams []*JoinedLivestream
 		if err := tx.SelectContext(ctx, &livestreams, query); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestreams: "+err.Error())
 		}
