@@ -37,6 +37,16 @@ type UserModel struct {
 	Description    string `db:"description"`
 	HashedPassword string `db:"password"`
 }
+type UserImageModel struct {
+	UserID         int64  `db:"user_id"`
+	Name           string `db:"name"`
+	DisplayName    string `db:"display_name"`
+	Description    string `db:"description"`
+	HashedPassword string `db:"password"`
+	image          string `db:"image"`
+	ThemeID        int64  `db:"theme_id"`
+	DarkMode       bool   `db:"dark_mode"`
+}
 
 type User struct {
 	ID          int64  `json:"id"`
@@ -70,6 +80,12 @@ type ThemeModel struct {
 	ID       int64 `db:"id"`
 	UserID   int64 `db:"user_id"`
 	DarkMode bool  `db:"dark_mode"`
+}
+type ThemeImageModel struct {
+	ID       int64  `db:"id"`
+	UserID   int64  `db:"user_id"`
+	DarkMode bool   `db:"dark_mode"`
+	Image    string `db:"image"`
 }
 
 type PostUserRequest struct {
@@ -428,7 +444,14 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 			return User{}, err
 		}
 	}
-	iconHash := sha256.Sum256(image)
+	//iconHash := sha256.Sum256(image)
+
+	var iconHash string
+	if len(image) == 0 {
+		iconHash = "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0"
+	} else {
+		iconHash = fmt.Sprintf("%x", sha256.Sum256(image))
+	}
 
 	user := User{
 		ID:          userModel.ID,
@@ -439,7 +462,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 			ID:       themeModel.ID,
 			DarkMode: themeModel.DarkMode,
 		},
-		IconHash: fmt.Sprintf("%x", iconHash),
+		IconHash: iconHash,
 	}
 
 	return user, nil
