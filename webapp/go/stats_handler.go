@@ -142,24 +142,19 @@ func getUserStatisticsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to count total reactions: "+err.Error())
 	}
 
-	// ライブコメント数、チップ合計
-	var totalLivecomments int64
-	var totalTip int64
-	var livestreams []*LivestreamModel
-	if err := tx.SelectContext(ctx, &livestreams, "SELECT * FROM livestreams WHERE user_id = ?", user.ID); err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestreams: "+err.Error())
+	//// ライブコメント数、チップ合計
+	var result struct {
+		TotalLivecomments int64
+		TotalTip          int64
 	}
 
-	for _, livestream := range livestreams {
-		var livecomments []*LivecommentModel
-		if err := tx.SelectContext(ctx, &livecomments, "SELECT * FROM livecomments WHERE livestream_id = ?", livestream.ID); err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livecomments: "+err.Error())
-		}
-
-		for _, livecomment := range livecomments {
-			totalTip += livecomment.Tip
-			totalLivecomments++
-		}
+	query = `
+	SELECT COUNT(lc.id) AS total_livecomments, IFNULL(SUM(lc.tip), 0) AS total_tip
+	FROM livestreams ls
+	LEFT JOIN livecomments lc ON lc.livestream_id = ls.id
+	WHERE ls.user_id = ?`
+	if err := tx.GetContext(ctx, &result, query, user.ID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestreams and livecomments data: "+err.Error())
 	}
 
 	// 合計視聴者数
