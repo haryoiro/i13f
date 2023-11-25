@@ -131,7 +131,12 @@ func getUserStatisticsHandler(c echo.Context) error {
 	//	rank++
 	//}
 
-	var rankingEntries []UserRankingEntry
+	var rankingEntries []struct {
+		ID        int64  `db:"id"`
+		Username  string `db:"name"`
+		Reactions int64  `db:"reactions"`
+		Tips      int64  `db:"tips"`
+	}
 	rankingQuery := `
 SELECT 
     u.id, 
