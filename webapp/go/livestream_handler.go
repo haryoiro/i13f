@@ -232,7 +232,7 @@ func searchLivestreamsHandler(c echo.Context) error {
 			FROM livestreams
 			LEFT JOIN users ON users.id = livestreams.user_id
 			LEFT JOIN themes ON themes.user_id = users.id
-			LEFT JOIN icons ON icons.user_id users.id
+			LEFT JOIN icons ON icons.user_id = users.id
 			LEFT JOIN livestream_tags ON livestream_tags.livestream_id = livestreams.id
 			LEFT JOIN tags ON tags.id = livestream_tags.tag_id
 		ORDER BY id DESC`
