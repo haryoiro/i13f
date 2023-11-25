@@ -82,7 +82,7 @@ type ThemeImageModel struct {
 	ID       int64  `db:"id"`
 	UserID   int64  `db:"user_id"`
 	DarkMode bool   `db:"dark_mode"`
-	image    string `db:"image"`
+	Image    string `db:"image"`
 }
 
 type PostUserRequest struct {
@@ -456,7 +456,7 @@ func fillUserResponse(ctx context.Context, tx *sqlx.Tx, userModel UserModel) (Us
 			return User{}, err
 		}
 	}
-	println("image {}, user_id {}, ", themeImageModel.image, themeImageModel.UserID)
+	println("image {}, user_id {}, ", themeImageModel.Image, themeImageModel.UserID)
 
 	//var iconHash string
 	//if len(image) == 0 {
