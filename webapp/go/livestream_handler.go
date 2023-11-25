@@ -56,12 +56,12 @@ type Livestream struct {
 
 type JoinedLivestream struct {
 	ID           int64         `db:"livestream_id" json:"id"`
-	Owner        PrefixedUser  `json:"owner"`
+	Owner        PrefixedUser  `db:"users" json:"owner"`
 	Title        string        `db:"livestream_title" json:"title"`
 	Description  string        `db:"livestream_description" json:"description"`
 	PlaylistUrl  string        `db:"livestream_playlist_url" json:"playlist_url"`
 	ThumbnailUrl string        `db:"livestream_thumbnail_url" json:"thumbnail_url"`
-	Tags         []PrefixedTag `json:"tags"`
+	Tags         []PrefixedTag `db:"tags" json:"tags"`
 	StartAt      int64         `db:"livestream_start_at" json:"start_at"`
 	EndAt        int64         `db:"livestream_end_at" json:"end_at"`
 }

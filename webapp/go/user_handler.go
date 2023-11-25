@@ -52,7 +52,7 @@ type PrefixedUser struct {
 	Name        string        `db:"user_name" json:"name"`
 	DisplayName string        `db:"user_display_name" json:"display_name,omitempty"`
 	Description string        `db:"user_description" json:"description,omitempty"`
-	Theme       PrefixedTheme `json:"theme,omitempty"`
+	Theme       PrefixedTheme `db:"themes" json:"theme,omitempty"`
 	IconHash    string        `db:"user_icon_hash" json:"icon_hash,omitempty"`
 }
 
