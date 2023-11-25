@@ -87,13 +87,7 @@ func getUserStatisticsHandler(c echo.Context) error {
 	}
 
 	// ランク算出
-	//var users []*UserModel
-	//if err := tx.SelectContext(ctx, &users, "SELECT * FROM users"); err != nil {
-	//	return echo.NewHTTPError(http.StatusInternalServerError, "failed to get users: "+err.Error())
-	//}
-
 	var ranking UserRanking
-
 	var rankings []UserRankingEntry
 	query := `
 SELECT
@@ -112,54 +106,6 @@ GROUP BY
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to count reactions and tips: "+err.Error())
 	}
 
-	//var ranking UserRanking
-	//for _, user := range users {
-	//var reactions int64
-	//query := `
-	//SELECT COUNT(*) FROM users u
-	//INNER JOIN livestreams l ON l.user_id = u.id
-	//INNER JOIN reactions r ON r.livestream_id = l.id
-	//WHERE u.id = ?`
-	//if err := tx.GetContext(ctx, &reactions, query, user.ID); err != nil && !errors.Is(err, sql.ErrNoRows) {
-	//	return echo.NewHTTPError(http.StatusInternalServerError, "failed to count reactions: "+err.Error())
-	//}
-	//
-	//var tips int64
-	//query = `
-	//SELECT IFNULL(SUM(l2.tip), 0) FROM users u
-	//INNER JOIN livestreams l ON l.user_id = u.id
-	//INNER JOIN livecomments l2 ON l2.livestream_id = l.id
-	//WHERE u.id = ?`
-	//if err := tx.GetContext(ctx, &tips, query, user.ID); err != nil && !errors.Is(err, sql.ErrNoRows) {
-	//	return echo.NewHTTPError(http.StatusInternalServerError, "failed to count tips: "+err.Error())
-	//}
-
-	//		var result struct {
-	//			Reactions int64 `db:"reactions"`
-	//			Tips      int64 `db:"tips"`
-	//		}
-	//		query := `
-	//SELECT
-	//	(IFNULL(SUM(r.count), 0) + IFNULL(SUM(lc.tip), 0)) as score
-	//FROM
-	//	users u
-	//LEFT JOIN
-	//	(SELECT l.user_id, COUNT(*) AS count FROM reactions r INNER JOIN livestreams l ON r.livestream_id = l.id GROUP BY l.user_id) r ON u.id = r.user_id
-	//LEFT JOIN
-	//	(SELECT l.user_id, SUM(lc.tip) AS tip FROM livecomments lc INNER JOIN livestreams l ON lc.livestream_id = l.id GROUP BY l.user_id) lc ON u.id = lc.user_id
-	//WHERE
-	//	u.id = ?
-	//`
-	//		if err := tx.GetContext(ctx, &result, query, user.ID); err != nil {
-	//			return echo.NewHTTPError(http.StatusInternalServerError, "failed to count reactions and tips: "+err.Error())
-	//		}
-	//
-	//		score := result.Reactions + result.Tips
-	//		ranking = append(ranking, UserRankingEntry{
-	//			Username: user.Name,
-	//			Score:    score,
-	//		})
-	//	}
 	ranking = rankings
 	sort.Sort(ranking)
 
