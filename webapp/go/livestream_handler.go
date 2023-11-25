@@ -54,6 +54,30 @@ type Livestream struct {
 	EndAt        int64  `json:"end_at"`
 }
 
+type JoinedLivestreamResp struct {
+	ID           int64         `db:"id" json:"id"`
+	Owner        PrefixedUser  `db:"users" json:"owner"`
+	Title        string        `db:"title" json:"title"`
+	Description  string        `db:"description" json:"description"`
+	PlaylistUrl  string        `db:"playlist_url" json:"playlist_url"`
+	ThumbnailUrl string        `db:"thumbnail_url" json:"thumbnail_url"`
+	Tags         []PrefixedTag `db:"tags" json:"tags"`
+	StartAt      int64         `db:"start_at" json:"start_at"`
+	EndAt        int64         `db:"end_at" json:"end_at"`
+}
+
+type JoinedLivestream struct {
+	ID           int64        `db:"id" json:"id"`
+	Owner        PrefixedUser `db:"users" json:"owner"`
+	Title        string       `db:"title" json:"title"`
+	Description  string       `db:"description" json:"description"`
+	PlaylistUrl  string       `db:"playlist_url" json:"playlist_url"`
+	ThumbnailUrl string       `db:"thumbnail_url" json:"thumbnail_url"`
+	Tags         []Tag        `db:"tags" json:"tags"`
+	StartAt      int64        `db:"start_at" json:"start_at"`
+	EndAt        int64        `db:"end_at" json:"end_at"`
+}
+
 type LivestreamTagModel struct {
 	ID           int64 `db:"id" json:"id"`
 	LivestreamID int64 `db:"livestream_id" json:"livestream_id"`
@@ -207,7 +231,25 @@ func searchLivestreamsHandler(c echo.Context) error {
 		}
 	} else {
 		// 検索条件なし
-		query := `SELECT * FROM livestreams ORDER BY id DESC`
+		query := `SELECT livestreams.id AS id,
+				livestreams.title AS title,
+				livestreams.description AS description,
+				livestreams.playlist_url AS playlist_url,
+				livestreams.thumbnail_url AS thumbnail_url,
+				livestreams.start_at AS start_at,
+				livestreams.end_at AS end_at,
+				users.id AS "users.id",
+				users.name AS "users.name",
+				users.display_name AS "users.display_name",
+				users.description AS "users.description",
+				themes.id AS "users.themes.id",
+				themes.dark_mode AS "users.themes.dark_mode",
+				IFNULL(SHA2(icons.image, 256), "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0") AS "users.icon_hash"
+			FROM livestreams
+			LEFT JOIN users ON users.id = livestreams.user_id
+			LEFT JOIN themes ON themes.user_id = users.id
+			LEFT JOIN icons ON icons.user_id = users.id
+		ORDER BY id DESC`
 		if c.QueryParam("limit") != "" {
 			limit, err := strconv.Atoi(c.QueryParam("limit"))
 			if err != nil {
@@ -216,9 +258,58 @@ func searchLivestreamsHandler(c echo.Context) error {
 			query += fmt.Sprintf(" LIMIT %d", limit)
 		}
 
-		if err := tx.SelectContext(ctx, &livestreamModels, query); err != nil {
+		var livestreams []*JoinedLivestream
+		if err := tx.SelectContext(ctx, &livestreams, query); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestreams: "+err.Error())
 		}
+
+		liveIdList := []int{}
+		lastLiveId := int64(-1)
+		for _, ls := range livestreams {
+			ls.Tags = make([]Tag, 0)
+			if ls.ID != lastLiveId {
+				liveIdList = append(liveIdList, int(ls.ID))
+				lastLiveId = ls.ID
+			}
+		}
+
+		type LiveTag struct {
+			LivestreamID int64  `db:"livestream_id"`
+			TagID        int64  `db:"tag_id"`
+			TagName      string `db:"tag_name"`
+		}
+		query2Base := `SELECT livestream_tags.livestream_id,
+				tags.id AS tag_id,
+				tags.name AS tag_name
+			FROM livestream_tags
+			LEFT JOIN tags ON tags.id = livestream_tags.tag_id
+			WHERE livestream_tags.livestream_id IN (?)`
+		var livetags []*LiveTag
+		query2, params, err := sqlx.In(query2Base, liveIdList)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to construct IN query: "+err.Error())
+		}
+		if err := tx.SelectContext(ctx, &livetags, query2, params...); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestream tags: "+err.Error())
+		}
+
+		if err := tx.Commit(); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
+		}
+
+		for _, tag := range livetags {
+			for _, ls := range livestreams {
+				if ls.ID == tag.LivestreamID {
+					ls.Tags = append(ls.Tags, Tag{
+						ID:   tag.TagID,
+						Name: tag.TagName,
+					})
+					break
+				}
+			}
+		}
+
+		return c.JSON(http.StatusOK, livestreams)
 	}
 
 	livestreams := make([]Livestream, len(livestreamModels))

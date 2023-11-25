@@ -13,6 +13,11 @@ type Tag struct {
 	Name string `json:"name"`
 }
 
+type PrefixedTag struct {
+	ID   int64  `db:"id" json:"id"`
+	Name string `db:"name" json:"name"`
+}
+
 type TagModel struct {
 	ID   int64  `db:"id"`
 	Name string `db:"name"`

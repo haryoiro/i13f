@@ -47,9 +47,23 @@ type User struct {
 	IconHash    string `json:"icon_hash,omitempty"`
 }
 
+type PrefixedUser struct {
+	ID          int64         `db:"id" json:"id"`
+	Name        string        `db:"name" json:"name"`
+	DisplayName string        `db:"display_name" json:"display_name,omitempty"`
+	Description string        `db:"description" json:"description,omitempty"`
+	Theme       PrefixedTheme `db:"themes" json:"theme,omitempty"`
+	IconHash    string        `db:"icon_hash" json:"icon_hash,omitempty"`
+}
+
 type Theme struct {
 	ID       int64 `json:"id"`
 	DarkMode bool  `json:"dark_mode"`
+}
+
+type PrefixedTheme struct {
+	ID       int64 `db:"id" json:"id"`
+	DarkMode bool  `db:"dark_mode" json:"dark_mode"`
 }
 
 type ThemeModel struct {
