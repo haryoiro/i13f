@@ -207,7 +207,11 @@ func searchLivestreamsHandler(c echo.Context) error {
 		}
 	} else {
 		// 検索条件なし
-		query := `SELECT * FROM livestreams ORDER BY id DESC`
+		query := `SELECT * FROM livestreams
+			LEFT JOIN users ON users.id = livestreams.user_id
+			LEFT JOIN livestream_tags ON livestream_tags.livestream_id = livestreams.id
+			LEFT JOIN tags ON tags.id = livestream_tags.tag_id
+		ORDER BY id DESC`
 		if c.QueryParam("limit") != "" {
 			limit, err := strconv.Atoi(c.QueryParam("limit"))
 			if err != nil {
@@ -216,9 +220,16 @@ func searchLivestreamsHandler(c echo.Context) error {
 			query += fmt.Sprintf(" LIMIT %d", limit)
 		}
 
-		if err := tx.SelectContext(ctx, &livestreamModels, query); err != nil {
+		var livestreams []*Livestream
+		if err := tx.SelectContext(ctx, &livestreams, query); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livestreams: "+err.Error())
 		}
+
+		if err := tx.Commit(); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
+		}
+
+		return c.JSON(http.StatusOK, livestreams)
 	}
 
 	livestreams := make([]Livestream, len(livestreamModels))
