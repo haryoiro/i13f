@@ -87,10 +87,10 @@ func getUserStatisticsHandler(c echo.Context) error {
 	}
 
 	// ランク算出
-	var users []*UserModel
-	if err := tx.SelectContext(ctx, &users, "SELECT * FROM users"); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get users: "+err.Error())
-	}
+	//var users []*UserModel
+	//if err := tx.SelectContext(ctx, &users, "SELECT * FROM users"); err != nil {
+	//	return echo.NewHTTPError(http.StatusInternalServerError, "failed to get users: "+err.Error())
+	//}
 
 	//var ranking UserRanking
 	//for _, user := range users {
