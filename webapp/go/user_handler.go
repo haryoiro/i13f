@@ -38,12 +38,14 @@ type UserModel struct {
 	HashedPassword string `db:"password"`
 }
 type UserImageModel struct {
-	ID             int64  `db:"id"`
+	UserID         int64  `db:"user_id"`
 	Name           string `db:"name"`
 	DisplayName    string `db:"display_name"`
 	Description    string `db:"description"`
 	HashedPassword string `db:"password"`
 	image          string `db:"image"`
+	ThemeID        int64  `db:"theme_id"`
+	DarkMode       bool   `db:"dark_mode"`
 }
 
 type User struct {

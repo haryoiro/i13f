@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -102,29 +101,30 @@ func getLivecommentsHandler(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get livecomments: "+err.Error())
 	}
+	//UserID         int64  `db:"user_id"`
+	//Name           string `db:"name"`
+	//DisplayName    string `db:"display_name"`
+	//Description    string `db:"description"`
+	//HashedPassword string `db:"password"`
+	//image          string `db:"image"`
+	//ThemeID        int64  `db:"theme_id"`
+	//DarkMode       bool   `db:"dark_mode"`
 
 	livecomments := make([]Livecomment, len(livecommentModels))
 	for i := range livecommentModels {
-
-		//ID             int64  `db:"id"`
-		//Name           string `db:"name"`
-		//DisplayName    string `db:"display_name"`
-		//Description    string `db:"description"`
-		//HashedPassword string `db:"password"`
-		//image          []byte `db:"image"`
-		//}
 		commentOwnerModel := UserImageModel{}
-		if err := tx.GetContext(ctx, &commentOwnerModel, "SELECT u.id as id, u.name as name, u.display_name as display_name, u.description as description, u.password as password, SHA2(ic.image, 256) AS image"+
-			"FROM users as u"+
-			"INNER JOIN icons as ic"+
-			"ON u.id = ic.user_id"+
-			"WHERE id = ?", livecommentModels[i].UserID); err != nil {
+		if err := tx.GetContext(ctx, &commentOwnerModel, "SELECT u.id as user_id, u.name as name, u.display_name as display_name, u.description as description, u.password as password, SHA2(ic.image, 256) AS image,"+
+			"th.id as theme_id, th.dark_mode as dark_mode"+
+			"FROM users as u "+
+			"INNER JOIN icons as ic ON u.id = ic.user_id "+
+			"INNER JOIN themes as th ON u.id = th.user_id "+
+			"WHERE u.id = ?", livecommentModels[i].UserID); err != nil {
 		}
-
-		themeModel := ThemeModel{}
-		if err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", commentOwnerModel.ID); err != nil {
-			log.Fatal(err)
-		}
+		//
+		//themeModel := ThemeModel{}
+		//if err := tx.GetContext(ctx, &themeModel, "SELECT * FROM themes WHERE user_id = ?", commentOwnerModel.ID); err != nil {
+		//	log.Fatal(err)
+		//}
 
 		//var image []byte
 		//if err := tx.GetContext(ctx, &image, "SELECT image FROM icons WHERE user_id = ?", commentOwnerModel.ID); err != nil {
@@ -137,15 +137,18 @@ func getLivecommentsHandler(c echo.Context) error {
 		//iconHash := sha256.Sum256(image)
 
 		commentOwner := User{
-			ID:          commentOwnerModel.ID,
+			ID:          commentOwnerModel.UserID,
 			Name:        commentOwnerModel.Name,
 			DisplayName: commentOwnerModel.DisplayName,
 			Description: commentOwnerModel.Description,
 			Theme: Theme{
-				ID:       themeModel.ID,
-				DarkMode: themeModel.DarkMode,
+				ID:       commentOwnerModel.ThemeID,
+				DarkMode: commentOwnerModel.DarkMode,
 			},
 			IconHash: commentOwnerModel.image,
+		}
+		if commentOwnerModel.image == "" {
+			commentOwner.IconHash = "d9f8294e9d895f81ce62e73dc7d5dff862a4fa40bd4e0fecf53f7526a8edcac0"
 		}
 
 		livestreamModel := LivestreamModel{}
