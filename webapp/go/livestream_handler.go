@@ -55,15 +55,15 @@ type Livestream struct {
 }
 
 type JoinedLivestream struct {
-	ID           int64         `json:"id"`
+	ID           int64         `db:"livestream_id" json:"id"`
 	Owner        PrefixedUser  `json:"owner"`
-	Title        string        `json:"title"`
-	Description  string        `json:"description"`
-	PlaylistUrl  string        `json:"playlist_url"`
-	ThumbnailUrl string        `json:"thumbnail_url"`
+	Title        string        `db:"livestream_title" json:"title"`
+	Description  string        `db:"livestream_description" json:"description"`
+	PlaylistUrl  string        `db:"livestream_playlist_url" json:"playlist_url"`
+	ThumbnailUrl string        `db:"livestream_thumbnail_url" json:"thumbnail_url"`
 	Tags         []PrefixedTag `json:"tags"`
-	StartAt      int64         `json:"start_at"`
-	EndAt        int64         `json:"end_at"`
+	StartAt      int64         `db:"livestream_start_at" json:"start_at"`
+	EndAt        int64         `db:"livestream_end_at" json:"end_at"`
 }
 
 type LivestreamTagModel struct {
@@ -219,13 +219,13 @@ func searchLivestreamsHandler(c echo.Context) error {
 		}
 	} else {
 		// 検索条件なし
-		query := `SELECT livestreams.id,
-				livestreams.title,
-				livestreams.description,
-				livestreams.playlist_url,
-				livestreams.thumbnail_url,
-				livestreams.start_at,
-				livestreams.end_at,
+		query := `SELECT livestreams.id AS livestream_id,
+				livestreams.title AS livestream_title,
+				livestreams.description AS livestream_description,
+				livestreams.playlist_url AS livestream_playlist_url,
+				livestreams.thumbnail_url AS livestream_thumbnail_url,
+				livestreams.start_at AS livestream_start_at,
+				livestreams.end_at AS livestream_end_at,
 				users.id AS user_id,
 				users.name AS user_name,
 				users.display_name AS user_display_name,
