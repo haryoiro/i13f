@@ -104,6 +104,8 @@ LEFT JOIN
 	(SELECT l.user_id, COUNT(*) AS count FROM reactions r INNER JOIN livestreams l ON r.livestream_id = l.id GROUP BY l.user_id) r ON u.id = r.user_id
 LEFT JOIN
 	(SELECT l.user_id, SUM(lc.tip) AS tip FROM livecomments lc INNER JOIN livestreams l ON lc.livestream_id = l.id GROUP BY l.user_id) lc ON u.id = lc.user_id
+GROUP BY 
+    u.id, u.name
 `
 	if err := tx.GetContext(ctx, &ranking, query, user.ID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to count reactions and tips: "+err.Error())
