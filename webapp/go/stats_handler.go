@@ -169,7 +169,7 @@ FROM
      LEFT JOIN 
         livestream_viewers_history v ON v.livestream_id = ls.id
      WHERE 
-        ls.user_id = 10
+        ls.user_id = ?
      GROUP BY 
         ls.id) AS subquery
 	`
