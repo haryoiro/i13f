@@ -22,7 +22,7 @@ jobs:
           key: ${{ secrets.DEPLOY_SECRET }}
           port: 22
           script: |
-            git pull && sudo systemctl restart isupipe-go.service
+            git pull origin kimura && cd webapp/go && make && sudo systemctl restart isupipe-go.service
   deploy-hodota:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/hodota'
@@ -36,7 +36,7 @@ jobs:
           key: ${{ secrets.DEPLOY_SECRET }}
           port: 22
           script: |
-            git pull && sudo systemctl restart isupipe-go.service
+            git pull origin hodota && cd webapp/go && make && sudo systemctl restart isupipe-go.service
   deploy-shirai:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/shirai'
@@ -50,5 +50,6 @@ jobs:
           key: ${{ secrets.DEPLOY_SECRET }}
           port: 22
           script: |
-            git pull && sudo systemctl restart isupipe-go.service
+            git pull origin shirai && cd webapp/go && make && sudo systemctl restart isupipe-go.service
+
 
