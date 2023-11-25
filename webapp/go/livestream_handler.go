@@ -54,7 +54,7 @@ type Livestream struct {
 	EndAt        int64  `json:"end_at"`
 }
 
-type JoinedLivestream struct {
+type JoinedLivestreamResp struct {
 	ID           int64         `db:"id" json:"id"`
 	Owner        PrefixedUser  `db:"users" json:"owner"`
 	Title        string        `db:"title" json:"title"`
@@ -64,6 +64,18 @@ type JoinedLivestream struct {
 	Tags         []PrefixedTag `db:"tags" json:"tags"`
 	StartAt      int64         `db:"start_at" json:"start_at"`
 	EndAt        int64         `db:"end_at" json:"end_at"`
+}
+
+type JoinedLivestream struct {
+	ID           int64        `db:"id" json:"id"`
+	Owner        PrefixedUser `db:"users" json:"owner"`
+	Title        string       `db:"title" json:"title"`
+	Description  string       `db:"description" json:"description"`
+	PlaylistUrl  string       `db:"playlist_url" json:"playlist_url"`
+	ThumbnailUrl string       `db:"thumbnail_url" json:"thumbnail_url"`
+	Tags         PrefixedTag  `db:"tags" json:"tags"`
+	StartAt      int64        `db:"start_at" json:"start_at"`
+	EndAt        int64        `db:"end_at" json:"end_at"`
 }
 
 type LivestreamTagModel struct {
@@ -241,7 +253,7 @@ func searchLivestreamsHandler(c echo.Context) error {
 			LEFT JOIN icons ON icons.user_id = users.id
 			LEFT JOIN livestream_tags ON livestream_tags.livestream_id = livestreams.id
 			LEFT JOIN tags ON tags.id = livestream_tags.tag_id
-		ORDER BY livestream_id DESC`
+		ORDER BY id DESC`
 		if c.QueryParam("limit") != "" {
 			limit, err := strconv.Atoi(c.QueryParam("limit"))
 			if err != nil {
@@ -259,7 +271,28 @@ func searchLivestreamsHandler(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit: "+err.Error())
 		}
 
-		return c.JSON(http.StatusOK, livestreams)
+		var resp []JoinedLivestreamResp
+		finalId := int64(-1)
+		for _, ls := range livestreams {
+			if finalId != ls.ID {
+				resp = append(resp, JoinedLivestreamResp{
+					ID:           ls.ID,
+					Owner:        ls.Owner,
+					Title:        ls.Title,
+					Description:  ls.Description,
+					PlaylistUrl:  ls.PlaylistUrl,
+					ThumbnailUrl: ls.ThumbnailUrl,
+					Tags:         []PrefixedTag{ls.Tags},
+					StartAt:      ls.StartAt,
+					EndAt:        ls.EndAt,
+				})
+				finalId = ls.ID
+			} else {
+				resp[len(resp)-1].Tags = append(resp[len(resp)-1].Tags, ls.Tags)
+			}
+		}
+
+		return c.JSON(http.StatusOK, resp)
 	}
 
 	livestreams := make([]Livestream, len(livestreamModels))
