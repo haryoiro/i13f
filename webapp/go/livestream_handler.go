@@ -219,7 +219,7 @@ func searchLivestreamsHandler(c echo.Context) error {
 		}
 	} else {
 		// 検索条件なし
-		query := `SELECT livestream.*,
+		query := `SELECT livestreams.*,
 				users.id AS user_id,
 				users.name AS user_name,
 				users.display_name AS user_display_name,
