@@ -92,11 +92,6 @@ func getUserStatisticsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get users: "+err.Error())
 	}
 
-	var result struct {
-		Reactions int64 `db:"reactions"`
-		Tips      int64 `db:"tips"`
-	}
-
 	var ranking UserRanking
 	for _, user := range users {
 		//var reactions int64
@@ -119,6 +114,10 @@ func getUserStatisticsHandler(c echo.Context) error {
 		//	return echo.NewHTTPError(http.StatusInternalServerError, "failed to count tips: "+err.Error())
 		//}
 
+		var result struct {
+			Reactions int64 `db:"reactions"`
+			Tips      int64 `db:"tips"`
+		}
 		query := `
 SELECT
 	IFNULL(SUM(r.count), 0) AS reactions,
